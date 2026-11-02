@@ -39,9 +39,9 @@ const AVENA_AGENDA_API = "https://api.avena.io/_ah/api/coach/v1/public/agenda";
 const AVENA_RATING = "5.0";
 const AVENA_REVIEWS = 18;
 
-// Guía de pago (cambiar por el link de Stripe de $249 cuando exista)
+// Guía de pago (link de Stripe de $249)
 const GUIA_PRICE = "$249 MXN";
-const GUIA_URL = "https://buy.stripe.com/dRm6oH6oA0wrfY9ah10gw06?utm_source=web";
+const GUIA_URL = "https://buy.stripe.com/7sY6oHaEQdjd3bnah10gw07?utm_source=web";
 
 const CONSULTORIO = {
   name: "Consultorio Zapopan",
