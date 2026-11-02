@@ -1,8 +1,182 @@
-import React from "react";
-import { ArrowRight, CheckCircle2, Dumbbell, HeartPulse, MessageCircle, Salad, ShieldCheck, Sparkles, Target, Trophy } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  FileText,
+  HeartPulse,
+  LoaderCircle,
+  MapPin,
+  Medal,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Sunrise,
+  Target,
+  Timer,
+  Users,
+  Video,
+  Waves,
+} from "lucide-react";
 
-const LOGO_URL = "/logo-cbm.png";
-const PROFILE_IMAGE_URL = "/foto-carlos.jpg";
+/* ───────────────────────── Datos editables ───────────────────────── */
+
+const LOGO_URL = "/logo-cbm.webp";
+const PROFILE_IMAGE_URL = "/foto-carlos.webp";
+const GUIA_IMAGE_URL = "/guia-portada.webp";
+
+const WHATSAPP_BASE = "https://wa.me/525657007223";
+const WHATSAPP_URL =
+  "https://wa.me/525657007223?text=Hola%2C%20vengo%20de%20la%20p%C3%A1gina%20web%20de%20CBM%20Nutrition%20y%20me%20gustar%C3%ADa%20agendar%20una%20consulta%20nutricional";
+const INSTAGRAM_URL = "https://www.instagram.com/cbm_nutrition/";
+
+// Perfil de especialista en Avena (aquí se confirma la cita)
+const AVENA_ALIAS = "cbarradas865";
+const AVENA_PROFILE_URL = "https://avena.io/nutriologos/jalisco/zapopan/carlos-barradas?utm_source=web";
+const AVENA_AGENDA_API = "https://api.avena.io/_ah/api/coach/v1/public/agenda";
+const AVENA_RATING = "5.0";
+const AVENA_REVIEWS = 18;
+
+// Guía de pago (cambiar por el link de Stripe de $249 cuando exista)
+const GUIA_PRICE = "$249 MXN";
+const GUIA_URL = "https://buy.stripe.com/dRm6oH6oA0wrfY9ah10gw06?utm_source=web";
+
+const CONSULTORIO = {
+  name: "Consultorio Zapopan",
+  address: "Gonzaga 4276, Ciudad de los Niños, Zapopan, Jalisco",
+  maps: "https://www.google.com/maps/search/?api=1&query=Gonzaga+4276+Ciudad+de+los+Ni%C3%B1os+Zapopan+Jalisco",
+};
+
+const TIMEZONE = "America/Mexico_City";
+
+/* ───────────────────────── Contenido ───────────────────────── */
+
+const areas = [
+  "Natación: competencia, máster y aguas abiertas",
+  "Alimentación según tu horario de nado",
+  "Día de competencia y entrenamientos dobles",
+  "Composición corporal sin perder rendimiento",
+  "Otros deportes: fútbol, básquetbol, gym y Hyrox",
+  "Nutrición clínica: resistencia a la insulina, diabetes, hipertensión y SOP",
+];
+
+const swimmers = [
+  {
+    icon: Sunrise,
+    title: "Nadas temprano",
+    text: "Entrenas a las 6 de la mañana y no sabes si entrar en ayunas o qué desayunar al salir.",
+  },
+  {
+    icon: Timer,
+    title: "Entrenas doble",
+    text: "Dos sesiones al día, escuela o trabajo en medio, y llegas sin energía a la segunda.",
+  },
+  {
+    icon: Medal,
+    title: "Compites",
+    text: "Eliminatorias, finales y pruebas el mismo día: qué comer entre una y otra sin que te caiga pesado.",
+  },
+  {
+    icon: Waves,
+    title: "Másters y aguas abiertas",
+    text: "Nadas antes o después del trabajo, o preparas una travesía, y quieres rendir y recuperarte mejor.",
+  },
+  {
+    icon: Users,
+    title: "Papás de nadadores",
+    text: "Quieres saber qué darle a tu hijo antes y después de entrenar, sin complicarte en la cocina.",
+  },
+  {
+    icon: Target,
+    title: "Composición corporal",
+    text: "Quieres bajar grasa o ganar músculo sin que se te caigan los tiempos en el agua.",
+  },
+];
+
+const services = [
+  {
+    icon: Waves,
+    title: "Nutrición para nadadores",
+    text: "Plan de alimentación según tu horario de nado, tus entrenamientos, tus competencias y lo que te gusta comer.",
+    ideal: "Nadadores de competencia, másters, aguas abiertas y papás de nadadores.",
+  },
+  {
+    icon: Medal,
+    title: "Nutrición deportiva",
+    text: "Para otros deportes: alimentación alrededor del entrenamiento, recuperación y rendimiento.",
+    ideal: "Fútbol, básquetbol, gym y Hyrox.",
+  },
+  {
+    icon: HeartPulse,
+    title: "Nutrición clínica",
+    text: "Control de glucosa, presión arterial, colesterol y triglicéridos, y condiciones como resistencia a la insulina, diabetes, hipertensión y SOP.",
+    ideal: "Control metabólico, prevención y cambio de hábitos.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Seguimiento",
+    text: "Ajustes del plan según tus avances, tu temporada, tus síntomas y qué tan fácil te resulta seguirlo.",
+    ideal: "Mantener el progreso durante toda la temporada.",
+  },
+];
+
+const process = [
+  {
+    title: "Agenda",
+    text: "Eliges día y hora aquí abajo, en consultorio en Zapopan o en línea, y te confirmo por WhatsApp.",
+  },
+  {
+    title: "Evaluación",
+    text: "Revisamos tu objetivo, historial, horarios de nado, entrenamientos, competencias y gustos.",
+  },
+  {
+    title: "Tu plan",
+    text: "Recibes tu plan en la app de Avena, con opciones realistas para tu semana.",
+  },
+  {
+    title: "Seguimiento",
+    text: "Ajustamos el plan según tus avances, tu temporada y tu rendimiento.",
+  },
+];
+
+const guiaIncluye = [
+  "Menús de 7 días según la hora a la que entras al agua",
+  "Qué comer antes y después de nadar",
+  "Qué llevar en la mochila",
+  "Lista del súper y hoja para pegar en el refri",
+  "Lo que pagas se descuenta de tu primera consulta (30 días)",
+];
+
+const faqs = [
+  {
+    q: "¿Solo atiendes nadadores?",
+    a: "No. Mi enfoque principal es la natación, pero también atiendo otros deportes y nutrición clínica (resistencia a la insulina, diabetes, hipertensión y SOP).",
+  },
+  {
+    q: "¿La consulta puede ser en línea?",
+    a: "Sí. Puedes elegir consulta presencial en Zapopan o en línea por videollamada, con el mismo seguimiento.",
+  },
+  {
+    q: "¿Cómo agendo?",
+    a: "En la sección Agenda ves mis horarios libres. Eliges lugar, día y hora, y se abre WhatsApp con tu horario ya escrito; envías el mensaje y te confirmo la cita.",
+  },
+  {
+    q: "¿El plan se adapta a mi horario de nado?",
+    a: "Sí. El plan se arma alrededor de tus entrenamientos: lo que comes antes, después y entre sesiones, y cómo cambia en semana de competencia.",
+  },
+  {
+    q: "¿Me vas a quitar mis alimentos favoritos?",
+    a: "No. La idea es acomodar lo que ya comes para que te sostenga en el agua, sin dietas extremas.",
+  },
+  {
+    q: "¿La guía de 7 días sustituye la consulta?",
+    a: "No. La guía es general y te sirve para empezar. En consulta el plan se ajusta a ti; y lo que pagaste por la guía se descuenta de tu primera consulta si agendas dentro de los 30 días.",
+  },
+];
+
+/* ───────────────────────── Componentes base ───────────────────────── */
 
 function CBMLogoMark({ size = "sm", className = "", white = false }) {
   const sizes = {
@@ -35,113 +209,13 @@ function BrandName({ variant = "dark" }) {
   );
 }
 
-const WHATSAPP_URL = "https://wa.me/525657007223?text=Hola%2C%20vengo%20de%20la%20p%C3%A1gina%20web%20de%20CBM%20Nutrition%20y%20me%20gustar%C3%ADa%20agendar%20una%20consulta%20nutricional";
-
-const areas = [
-  "Composición corporal",
-  "Nutrición aplicada al rendimiento físico",
-  "Deportes: natación, fútbol, básquetbol, gym y Hyrox",
-  "Resistencia a la insulina",
-  "Diabetes mellitus",
-  "Hipertensión",
-  "Síndrome de ovario poliquístico",
-];
-
-const helpItems = [
-  "Mejorar su composición corporal",
-  "Mejorar su rendimiento en el deporte",
-  "Optimizar energía, recuperación y alimentación alrededor del entrenamiento",
-  "Controlar glucosa, colesterol o presión arterial",
-  "Mejorar resistencia a la insulina",
-  "Manejar diabetes, hipertensión o SOP",
-  "Organizar su alimentación con opciones prácticas",
-];
-
-const services = [
-  {
-    icon: HeartPulse,
-    title: "Consulta nutricional clínica",
-    text: "Para personas que buscan mejorar su salud metabólica, controlar glucosa, presión arterial, colesterol, triglicéridos o condiciones como resistencia a la insulina, diabetes, hipertensión y SOP.",
-    ideal: "Control metabólico, prevención, cambios de hábitos y mejora de salud.",
-  },
-  {
-    icon: Trophy,
-    title: "Nutrición deportiva",
-    text: "Para personas que entrenan y quieren mejorar su rendimiento, recuperación, composición corporal y alimentación alrededor del ejercicio.",
-    ideal: "Entrenamiento, recuperación, rendimiento y alimentación deportiva.",
-  },
-  {
-    icon: Target,
-    title: "Mejora de composición corporal",
-    text: "Para quienes buscan perder grasa, ganar músculo o mejorar su físico sin dietas extremas ni planes imposibles de seguir.",
-    ideal: "Personas que quieren verse, sentirse y rendir mejor.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Seguimiento nutricional personalizado",
-    text: "Ajustes periódicos del plan de alimentación según tus avances, rutina, síntomas, entrenamiento y adherencia.",
-    ideal: "Mantener progreso real y sostenible.",
-  },
-];
-
-const process = [
-  {
-    title: "Evaluación inicial",
-    text: "Conocemos tu objetivo, historial clínico, hábitos, horarios, entrenamiento, gustos y necesidades específicas.",
-  },
-  {
-    title: "Plan personalizado",
-    text: "Diseño un plan de alimentación adaptado a ti, con opciones realistas, accesibles y sostenibles.",
-  },
-  {
-    title: "Seguimiento y ajustes",
-    text: "Revisamos avances, síntomas, adherencia y rendimiento para ajustar el plan según tu progreso.",
-  },
-  {
-    title: "Educación alimentaria",
-    text: "Aprendes a tomar mejores decisiones, combinar alimentos y mantener resultados sin depender de dietas extremas.",
-  },
-];
-
-const sportGoals = [
-  "Mejorar energía durante el entrenamiento",
-  "Optimizar recuperación",
-  "Ajustar alimentación antes, durante y después del ejercicio",
-  "Mejorar composición corporal",
-  "Reducir fatiga",
-  "Preparar competencias o eventos deportivos",
-];
-
-const faqs = [
-  {
-    q: "¿La consulta puede ser online?",
-    a: "Sí, puedes recibir atención nutricional online con seguimiento personalizado.",
-  },
-  {
-    q: "¿El plan es personalizado?",
-    a: "Sí. El plan se adapta a tu objetivo, horarios, gustos, presupuesto, estado de salud y nivel de actividad física.",
-  },
-  {
-    q: "¿Me vas a quitar todos mis alimentos favoritos?",
-    a: "No. La idea es aprender a comer mejor sin depender de dietas extremas o restricciones innecesarias.",
-  },
-  {
-    q: "¿También atiendes deportistas?",
-    a: "Sí. La consulta puede adaptarse a distintos deportes y niveles de entrenamiento, ya sea que busques mejorar rendimiento, composición corporal, recuperación o alimentación alrededor del ejercicio.",
-  },
-  {
-    q: "¿Puedo ir si tengo resistencia a la insulina, diabetes, hipertensión o SOP?",
-    a: "Sí. La consulta también puede enfocarse en control metabólico y mejora de hábitos alimentarios.",
-  },
-  {
-    q: "¿Cómo puedo agendar?",
-    a: "Puedes agendar directamente por WhatsApp desde el botón de la página.",
-  },
-];
-
-function SectionLabel({ children }) {
+function SectionLabel({ children, dark = false }) {
   return (
-    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold leading-tight text-cyan-700">
+    <span
+      className={`inline-flex max-w-full items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold leading-tight ${
+        dark ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-cyan-200 bg-cyan-50 text-cyan-700"
+      }`}
+    >
       <Sparkles className="h-4 w-4" />
       {children}
     </span>
@@ -166,12 +240,15 @@ function InstagramLogo({ className = "" }) {
   );
 }
 
-function ButtonLink({ children, href = WHATSAPP_URL, variant = "primary" }) {
-  const base = "inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 sm:w-auto";
-  const styles =
-    variant === "primary"
-      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25 hover:bg-cyan-600"
-      : "border border-slate-300 bg-white text-slate-900 hover:border-cyan-400 hover:text-cyan-700";
+function ButtonLink({ children, href, variant = "primary", className = "" }) {
+  const base =
+    "inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 sm:w-auto";
+  const styles = {
+    primary: "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25 hover:bg-cyan-600",
+    secondary: "border border-slate-300 bg-white text-slate-900 hover:border-cyan-400 hover:text-cyan-700",
+    dark: "bg-slate-950 text-white hover:bg-cyan-600",
+    ghost: "border border-white/25 bg-white/5 text-white hover:border-cyan-300 hover:text-cyan-200",
+  }[variant];
   const isExternal = href.startsWith("http");
 
   return (
@@ -179,12 +256,244 @@ function ButtonLink({ children, href = WHATSAPP_URL, variant = "primary" }) {
       href={href}
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
-      className={`${base} ${styles}`}
+      className={`${base} ${styles} ${className}`}
     >
       {children}
     </a>
   );
 }
+
+function Stars({ className = "h-4 w-4" }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 text-amber-400" aria-hidden="true">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Star key={i} className={`${className} fill-current`} />
+      ))}
+    </span>
+  );
+}
+
+/* ───────────────────────── Agenda (disponibilidad real de Avena) ───────────────────────── */
+
+const DAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+const DAY_LONG = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+// Fecha de hoy en Ciudad de México (sin depender de la zona del visitante)
+function todayInMexico() {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(new Date())
+    .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+function apiDate(d) {
+  return `${d.getUTCDate()}-${d.getUTCMonth() + 1}-${d.getUTCFullYear()}`;
+}
+
+function formatHour({ hour, minute }) {
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  const suffix = hour < 12 ? "am" : "pm";
+  return minute ? `${h12}:${String(minute).padStart(2, "0")} ${suffix}` : `${h12} ${suffix}`;
+}
+
+function useAvenaAgenda(daysAhead = 21) {
+  const [state, setState] = useState({ status: "loading", days: [] });
+
+  useEffect(() => {
+    let cancelled = false;
+    const start = todayInMexico();
+    // Avena pide al menos 24 h de anticipación: empezamos mañana y filtramos lo que regrese vacío
+    const dates = Array.from({ length: daysAhead }, (_, i) => addDays(start, i + 1));
+
+    Promise.all(
+      dates.map((d) => {
+        const params = new URLSearchParams({ alias: AVENA_ALIAS, timezone: TIMEZONE, date: apiDate(d) });
+        return fetch(`${AVENA_AGENDA_API}?${params}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((json) => ({ date: d, slots: json?.schedule ?? [] }))
+          .catch(() => ({ date: d, slots: [], failed: true }));
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      if (results.every((r) => r.failed)) {
+        setState({ status: "error", days: [] });
+        return;
+      }
+      const days = results.filter((r) => r.slots.length > 0);
+      setState({ status: days.length ? "ready" : "empty", days });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [daysAhead]);
+
+  return state;
+}
+
+function AgendaWidget() {
+  const { status, days } = useAvenaAgenda();
+  const [mode, setMode] = useState("presencial");
+  const [dayIndex, setDayIndex] = useState(0);
+  const [slotIndex, setSlotIndex] = useState(0);
+
+  const visibleDays = useMemo(() => days.slice(0, 10), [days]);
+  const day = visibleDays[dayIndex];
+  const slot = day?.slots[slotIndex];
+
+  const selectDay = (i) => {
+    setDayIndex(i);
+    setSlotIndex(0);
+  };
+
+  const label = day && slot ? `${DAY_LONG[day.date.getUTCDay()]} ${day.date.getUTCDate()} · ${formatHour(slot.start)}` : "";
+
+  // Mensaje de WhatsApp con el horario elegido (la cita la registra Carlos en su agenda)
+  const bookingUrl = useMemo(() => {
+    if (!day || !slot) return WHATSAPP_URL;
+    const fecha = `${DAY_LONG[day.date.getUTCDay()]} ${day.date.getUTCDate()} de ${MONTHS[day.date.getUTCMonth()]}`;
+    const modalidad = mode === "online" ? "en línea" : "presencial en el consultorio de Zapopan";
+    const text = `Hola, vengo de la página web de CBM Nutrition. Me gustaría agendar una consulta ${modalidad} el ${fecha} a las ${formatHour(slot.start)}.`;
+    return `${WHATSAPP_BASE}?text=${encodeURIComponent(text)}`;
+  }, [day, slot, mode]);
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] bg-white text-slate-900 shadow-2xl shadow-slate-950/30 ring-1 ring-slate-100">
+      <div className="flex items-center justify-between bg-[#0B1F4D] px-6 py-4 text-white">
+        <p className="flex items-center gap-2 font-black">
+          <CalendarDays className="h-5 w-5 text-cyan-300" />
+          Agenda tu cita
+        </p>
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+          <Stars className="h-3.5 w-3.5" /> {AVENA_RATING}
+        </span>
+      </div>
+
+      <div className="space-y-6 p-5 sm:p-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Elige el lugar</p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {[
+              { id: "presencial", icon: MapPin, title: "Presencial", sub: CONSULTORIO.name },
+              { id: "online", icon: Video, title: "En línea", sub: "Videollamada" },
+            ].map(({ id, icon: Icon, title, sub }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMode(id)}
+                className={`rounded-2xl border p-3 text-left transition ${
+                  mode === id ? "border-cyan-500 bg-cyan-50 ring-2 ring-cyan-500/20" : "border-slate-200 hover:border-cyan-300"
+                }`}
+              >
+                <span className="flex items-center gap-2 text-sm font-black text-slate-950">
+                  <Icon className="h-4 w-4 text-cyan-600" />
+                  {title}
+                </span>
+                <span className="mt-1 block text-xs font-semibold text-slate-500">{sub}</span>
+              </button>
+            ))}
+          </div>
+          {mode === "presencial" && (
+            <a
+              href={CONSULTORIO.maps}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-700 hover:underline"
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              {CONSULTORIO.address}
+            </a>
+          )}
+        </div>
+
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Elige el día</p>
+
+          {status === "loading" && (
+            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              Buscando horarios disponibles…
+            </div>
+          )}
+
+          {(status === "error" || status === "empty") && (
+            <div className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              {status === "error"
+                ? "No pude cargar los horarios en este momento."
+                : "No hay horarios libres en las próximas tres semanas."}{" "}
+              Escríbeme por WhatsApp y buscamos un horario.
+            </div>
+          )}
+
+          {status === "ready" && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {visibleDays.map((d, i) => (
+                <button
+                  key={apiDate(d.date)}
+                  type="button"
+                  onClick={() => selectDay(i)}
+                  className={`flex w-16 shrink-0 flex-col items-center rounded-2xl border py-2 transition ${
+                    i === dayIndex ? "border-cyan-500 bg-cyan-50 text-cyan-800 ring-2 ring-cyan-500/20" : "border-slate-200 text-slate-700 hover:border-cyan-300"
+                  }`}
+                >
+                  <span className="text-[11px] font-bold">{DAY_SHORT[d.date.getUTCDay()]}</span>
+                  <span className="text-xl font-black">{d.date.getUTCDate()}</span>
+                  <span className="text-[10px] font-semibold text-slate-500">{MONTHS[d.date.getUTCMonth()].slice(0, 3)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {status === "ready" && day && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Horarios disponibles</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {day.slots.map((s, i) => (
+                <button
+                  key={`${s.start.hour}-${s.start.minute}`}
+                  type="button"
+                  onClick={() => setSlotIndex(i)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-bold transition ${
+                    i === slotIndex ? "border-cyan-500 bg-cyan-50 text-cyan-800 ring-2 ring-cyan-500/20" : "border-slate-200 text-slate-700 hover:border-cyan-300"
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatHour(s.start)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Hora del centro de México.</p>
+          </div>
+        )}
+
+        <div>
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-cyan-500 px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-cyan-500/25 transition hover:-translate-y-0.5 hover:bg-cyan-600"
+          >
+            <WhatsAppLogo className="h-5 w-5" />
+            {label ? `Agendar ${label}` : "Agendar por WhatsApp"}
+          </a>
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+            Se abre WhatsApp con tu horario ya escrito; solo envía el mensaje y te confirmo la cita.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── Página ───────────────────────── */
 
 export default function App() {
   return (
@@ -195,88 +504,94 @@ export default function App() {
             <CBMLogoMark size="sm" />
             <div className="min-w-0 leading-tight">
               <BrandName />
-              <p className="hidden text-xs font-semibold text-slate-600 lg:block">
-                Nutrición clínica y deportiva · Consulta online y presencial
-              </p>
+              <p className="hidden text-xs font-semibold text-slate-600 lg:block">Nutrición para nadadores · Zapopan y en línea</p>
             </div>
           </a>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-700 md:flex">
             <a href="#sobre-mi" className="hover:text-cyan-700">Sobre mí</a>
+            <a href="#nadadores" className="hover:text-cyan-700">Nadadores</a>
             <a href="#servicios" className="hover:text-cyan-700">Servicios</a>
-            <a href="#deportes" className="hover:text-cyan-700">Deportes</a>
+            <a href="#guia" className="hover:text-cyan-700">Guía</a>
             <a href="#faq" className="hover:text-cyan-700">FAQ</a>
           </nav>
-          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-cyan-600 sm:px-5 sm:py-2.5 sm:text-sm">
+          <a
+            href="#agenda"
+            className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-cyan-600 sm:px-5 sm:py-2.5 sm:text-sm"
+          >
             Agendar
           </a>
         </div>
       </header>
 
+      {/* Hero */}
       <section id="inicio" className="relative overflow-hidden px-4 py-12 sm:px-5 sm:py-16 lg:px-8 lg:py-24">
         <div className="absolute -right-32 top-16 h-72 w-72 rounded-full bg-cyan-300/30 blur-3xl" />
         <div className="absolute -left-24 bottom-8 h-64 w-64 rounded-full bg-white/70 blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl">
-          <div>
-            <SectionLabel>Nutrición clínica y deportiva personalizada</SectionLabel>
-            <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl md:text-6xl lg:text-7xl">
-              <span className="block">Come mejor.</span>
-              <span className="block">Rinde más.</span>
-              <span className="block">Mejora tu salud</span>
-              <span className="block">sin complicarte.</span>
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:mt-6 sm:text-lg sm:leading-8">
-              Nutrición personalizada para mejorar tu composición corporal, controlar tu salud metabólica y potenciar tu rendimiento físico con un plan adaptado a ti.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink>
-                <WhatsAppLogo className="h-5 w-5" />
-                Agendar consulta por WhatsApp
-              </ButtonLink>
-              <ButtonLink href="#servicios" variant="secondary">
-                Ver servicios
-                <ArrowRight className="h-5 w-5" />
-              </ButtonLink>
-            </div>
-            <div className="mt-8 grid gap-3 text-sm font-semibold text-slate-700 sm:grid-cols-3">
-              {["Online y presencial", "Plan personalizado", "Enfoque clínico y deportivo"].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-cyan-600" />
-                  {item}
-                </div>
-              ))}
-            </div>
+          <SectionLabel>Nutriólogo y nadador · Zapopan y en línea</SectionLabel>
+          <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl md:text-6xl lg:text-7xl">
+            <span className="block">Come mejor.</span>
+            <span className="block">Nada mejor.</span>
+            <span className="block text-cyan-600">Según tu horario</span>
+            <span className="block">de nado.</span>
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:mt-6 sm:text-lg sm:leading-8">
+            Nutrición deportiva para nadadores de competencia, másters, aguas abiertas y papás de nadadores. Un plan que se acomoda a tus entrenamientos, tus competencias y tu vida real.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <ButtonLink href="#agenda">
+              <CalendarDays className="h-5 w-5" />
+              Agendar consulta
+            </ButtonLink>
+            <ButtonLink href="#guia" variant="secondary">
+              Guía de 7 días para nadadores
+              <ArrowRight className="h-5 w-5" />
+            </ButtonLink>
+          </div>
+          <div className="mt-8 grid gap-3 text-sm font-semibold text-slate-700 sm:grid-cols-3">
+            <a href={AVENA_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-cyan-700">
+              <Stars />
+              {AVENA_RATING} · {AVENA_REVIEWS} reseñas en Avena
+            </a>
+            {["Presencial en Zapopan y en línea", "Plan según tu horario de nado"].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-cyan-600" />
+                {item}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Sobre mí */}
       <section id="sobre-mi" className="bg-white px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="relative rounded-[2rem] bg-[#F7F0E8] p-5 shadow-sm sm:p-8">
             <div className="overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-xl shadow-slate-900/10">
               <img
                 src={PROFILE_IMAGE_URL}
-                alt="Carlos Barradas, Licenciado en Nutrición"
+                alt="Carlos Barradas, nutriólogo deportivo"
                 className="aspect-[4/5] h-full w-full object-cover object-center"
+                loading="lazy"
               />
             </div>
             <div className="absolute bottom-8 left-8 right-8 rounded-3xl bg-white/90 p-5 shadow-lg backdrop-blur sm:bottom-12 sm:left-12 sm:right-12">
               <p className="text-sm font-bold text-cyan-700">CBM Nutrition</p>
               <p className="mt-1 text-2xl font-black text-slate-950">Carlos Barradas</p>
-              <p className="text-sm font-semibold text-slate-600">Lic. en Nutrición</p>
+              <p className="text-sm font-semibold text-slate-600">Lic. en Nutrición · Céd. prof. 15115712</p>
             </div>
           </div>
           <div>
             <SectionLabel>Sobre mí</SectionLabel>
-            <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Soy Carlos Barradas</h2>
-            <p className="mt-3 text-xl font-bold text-cyan-700">Lic. en Nutrición</p>
+            <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Soy nutriólogo y nadador</h2>
             <p className="mt-6 text-lg leading-8 text-slate-700">
-              Ayudo a personas que buscan mejorar su salud, composición corporal y rendimiento físico mediante planes de alimentación personalizados, realistas y sostenibles.
+              Soy Carlos Barradas, licenciado en Nutrición. La natación la vivo desde dentro, como nadador e instructor, y eso cambia cómo armo un plan: sé lo que es entrar al agua a las 6 de la mañana, entrenar doble o comer entre una prueba y otra.
             </p>
             <p className="mt-4 text-lg leading-8 text-slate-700">
-              Mi enfoque combina evaluación nutricional, educación alimentaria y seguimiento para que puedas lograr tus objetivos sin dietas extremas ni planes genéricos.
+              Mi enfoque combina evaluación, educación alimentaria y seguimiento, para que comas lo que te sostiene en el agua sin dietas extremas ni planes genéricos.
             </p>
-            <h3 className="mt-8 text-xl font-black text-slate-950">Áreas de experiencia</h3>
+            <h3 className="mt-8 text-xl font-black text-slate-950">Con qué te ayudo</h3>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {areas.map((area) => (
                 <div key={area} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
@@ -285,25 +600,40 @@ export default function App() {
                 </div>
               ))}
             </div>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-cyan-700 hover:underline"
+            >
+              <InstagramLogo className="h-4 w-4" />
+              Sígueme en Instagram: @cbm_nutrition
+            </a>
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-950 px-4 py-16 text-white sm:px-5 sm:py-20 lg:px-8">
+      {/* Nadadores */}
+      <section id="nadadores" className="bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-4 py-16 text-white sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-300">Objetivos</p>
-          <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">¿A quién puedo ayudar?</h2>
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-300">Para nadadores</p>
+          <h2 className="mt-4 max-w-3xl text-4xl font-black tracking-tight md:text-5xl">Lo que comes también es parte de tu entrenamiento</h2>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
+            No es lo mismo nadar a las 6 de la mañana que a las 7 de la noche, ni un día de series que uno de competencia. El plan se arma alrededor de tus horarios en el agua.
+          </p>
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {helpItems.map((item) => (
-              <div key={item} className="rounded-3xl bg-white/8 p-6 ring-1 ring-white/10 backdrop-blur">
-                <CheckCircle2 className="h-6 w-6 text-cyan-300" />
-                <p className="mt-4 font-semibold leading-7 text-slate-100">{item}</p>
+            {swimmers.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="rounded-3xl bg-white/10 p-6 ring-1 ring-white/10">
+                <Icon className="h-6 w-6 text-cyan-300" />
+                <h3 className="mt-4 text-lg font-black">{title}</h3>
+                <p className="mt-2 leading-7 text-slate-200">{text}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Servicios */}
       <section id="servicios" className="px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
@@ -312,7 +642,10 @@ export default function App() {
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             {services.map(({ icon: Icon, title, text, ideal }) => (
-              <article key={title} className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/10 sm:p-7">
+              <article
+                key={title}
+                className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/10 sm:p-7"
+              >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700">
                   <Icon className="h-7 w-7" />
                 </div>
@@ -327,13 +660,54 @@ export default function App() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
+      {/* Guía */}
+      <section id="guia" className="bg-white px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="mx-auto w-full max-w-sm">
+            <img
+              src={GUIA_IMAGE_URL}
+              alt="Portada de la guía 7 días de comidas para nadadores"
+              className="w-full rounded-2xl shadow-2xl shadow-slate-900/30 ring-1 ring-slate-900/5"
+              loading="lazy"
+            />
+          </div>
+          <div>
+            <SectionLabel>Guía en PDF</SectionLabel>
+            <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">7 días de comidas para nadadores</h2>
+            <p className="mt-3 text-xl font-bold text-cyan-700">Según tu horario de nado</p>
+            <p className="mt-6 text-lg leading-8 text-slate-700">
+              Si todavía no quieres agendar, empieza por aquí: una semana completa de comidas armada según la hora a la que entras al agua.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {guiaIncluye.map((item) => (
+                <li key={item} className="flex items-start gap-3 font-semibold text-slate-700">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-600" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <ButtonLink href={GUIA_URL}>
+                <ShoppingBag className="h-5 w-5" />
+                Comprar la guía · {GUIA_PRICE}
+              </ButtonLink>
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+                <FileText className="h-4 w-4" />
+                Descarga inmediata al pagar
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Proceso */}
+      <section className="px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionLabel>Proceso</SectionLabel>
           <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">¿Cómo trabajo?</h2>
           <div className="mt-10 grid gap-5 lg:grid-cols-4">
             {process.map((step, index) => (
-              <div key={step.title} className="rounded-[2rem] border border-slate-100 bg-slate-50 p-6">
+              <div key={step.title} className="rounded-[2rem] border border-slate-100 bg-white p-6">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-950 text-lg font-black text-white">{index + 1}</div>
                 <h3 className="mt-6 text-xl font-black text-slate-950">{step.title}</h3>
                 <p className="mt-3 leading-7 text-slate-700">{step.text}</p>
@@ -343,43 +717,33 @@ export default function App() {
         </div>
       </section>
 
-      <section id="deportes" className="bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-4 py-16 text-white sm:px-5 sm:py-20 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-300">Enfoque deportivo</p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">Nutrición para entrenar mejor, recuperarte mejor y rendir más</h2>
+      {/* Agenda */}
+      <section id="agenda" className="scroll-mt-20 bg-slate-950 px-4 py-16 text-white sm:px-5 sm:py-20 lg:px-8">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[1fr_1fr]">
+          <div className="lg:pt-6">
+            <SectionLabel dark>Agenda</SectionLabel>
+            <h2 className="mt-6 text-4xl font-black tracking-tight md:text-5xl">Empieza con un plan hecho para tu horario de nado</h2>
             <p className="mt-6 text-lg leading-8 text-slate-200">
-              La alimentación también forma parte de tu entrenamiento. Un plan nutricional bien diseñado puede ayudarte a mejorar tu energía, recuperación, composición corporal y rendimiento deportivo.
+              Estos son los horarios que tengo libres ahora mismo. Elige consulta presencial en Zapopan o en línea, el día y la hora, y me mandas el mensaje por WhatsApp.
             </p>
+            <a
+              href={AVENA_PROFILE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center gap-3 rounded-2xl bg-white/10 px-5 py-4 ring-1 ring-white/10 transition hover:bg-white/15"
+            >
+              <Stars className="h-5 w-5" />
+              <span>
+                <span className="block font-black">{AVENA_RATING} de calificación</span>
+                <span className="block text-sm text-slate-300">{AVENA_REVIEWS} reseñas de pacientes en Avena</span>
+              </span>
+            </a>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {sportGoals.map((goal) => (
-              <div key={goal} className="rounded-3xl bg-white/10 p-6 ring-1 ring-white/10">
-                <Trophy className="h-6 w-6 text-cyan-300" />
-                <p className="mt-4 font-semibold leading-7 text-slate-100">{goal}</p>
-              </div>
-            ))}
-          </div>
+          <AgendaWidget />
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-[2rem] bg-white p-5 shadow-sm sm:p-8 md:p-12">
-          <SectionLabel>Resultados reales</SectionLabel>
-          <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Resultados con un enfoque realista</h2>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-700">
-            Cada persona tiene objetivos, horarios, gustos y necesidades diferentes. Por eso, el plan se adapta a tu vida real, no al revés.
-          </p>
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {["Entender qué comer y por qué", "Crear hábitos sostenibles", "Mejorar tu relación con la comida", "Evitar dietas extremas", "Mantener resultados a largo plazo"].map((item) => (
-              <div key={item} className="rounded-3xl bg-[#F7F0E8] p-5 font-semibold leading-7 text-slate-700">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* FAQ */}
       <section id="faq" className="bg-white px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <SectionLabel>Dudas frecuentes</SectionLabel>
@@ -387,9 +751,7 @@ export default function App() {
           <div className="mt-10 space-y-4">
             {faqs.map((faq) => (
               <details key={faq.q} className="group rounded-3xl border border-slate-100 bg-slate-50 p-6 open:bg-white open:shadow-lg open:shadow-slate-900/5">
-                <summary className="cursor-pointer list-none text-lg font-black text-slate-950">
-                  {faq.q}
-                </summary>
+                <summary className="cursor-pointer list-none text-lg font-black text-slate-950">{faq.q}</summary>
                 <p className="mt-4 leading-7 text-slate-700">{faq.a}</p>
               </details>
             ))}
@@ -397,26 +759,12 @@ export default function App() {
         </div>
       </section>
 
-      <section className="bg-slate-950 px-4 py-16 text-white sm:px-5 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-black tracking-tight md:text-5xl">Empieza con un plan diseñado para ti</h2>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-200">
-            Mejora tu alimentación, salud y rendimiento con una estrategia personalizada, realista y sostenible.
-          </p>
-          <div className="mt-8">
-            <ButtonLink>
-              <WhatsAppLogo className="h-5 w-5" />
-              Agendar consulta por WhatsApp
-            </ButtonLink>
-          </div>
-        </div>
-      </section>
-
-      <section id="aviso-de-privacidad" className="bg-white px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
+      {/* Aviso de privacidad */}
+      <section id="aviso-de-privacidad" className="px-4 py-16 sm:px-5 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <SectionLabel>Información legal</SectionLabel>
           <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Aviso de privacidad</h2>
-          <div className="mt-8 space-y-6 rounded-[2rem] bg-slate-50 p-5 text-justify leading-7 text-slate-700 ring-1 ring-slate-100 sm:p-8">
+          <div className="mt-8 space-y-6 rounded-[2rem] bg-white p-5 text-justify leading-7 text-slate-700 ring-1 ring-slate-100 sm:p-8">
             <p>
               <strong className="text-slate-950">CBM Nutrition</strong>, a cargo de Carlos Barradas, es responsable del uso y protección de los datos personales que proporciones a través de esta página web, WhatsApp, redes sociales, formularios, mensajes o durante la consulta nutricional.
             </p>
@@ -430,6 +778,12 @@ export default function App() {
               <h3 className="text-xl font-black text-slate-950">Finalidades del uso de datos</h3>
               <p className="mt-2">
                 Tus datos serán utilizados para brindar atención nutricional personalizada, elaborar planes de alimentación, dar seguimiento a tu progreso, agendar o confirmar citas, mantener comunicación relacionada con tu atención y cumplir obligaciones profesionales, administrativas o legales aplicables.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-950">Plataformas que usamos</h3>
+              <p className="mt-2">
+                Los planes se entregan a través de Avena y los pagos de la guía se procesan con Stripe. Cada plataforma trata tus datos conforme a su propio aviso de privacidad. Esta página no guarda tus datos.
               </p>
             </div>
             <div>
@@ -450,7 +804,7 @@ export default function App() {
                 Este aviso puede actualizarse por cambios en los servicios, requisitos legales o prácticas internas. Cualquier modificación estará disponible en esta misma sección.
               </p>
             </div>
-            <p className="text-sm font-semibold text-slate-500">Última actualización: mayo 2026.</p>
+            <p className="text-sm font-semibold text-slate-500">Última actualización: noviembre 2026.</p>
           </div>
         </div>
       </section>
@@ -461,7 +815,7 @@ export default function App() {
             <CBMLogoMark size="lg" white />
             <div className="leading-tight">
               <BrandName variant="light" />
-              <p>Nutrición clínica y deportiva · Consulta online y presencial</p>
+              <p>Nutrición para nadadores · Zapopan y en línea</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -475,7 +829,7 @@ export default function App() {
               <WhatsAppLogo className="h-6 w-6" />
             </a>
             <a
-              href="https://www.instagram.com/cbm_nutrition/"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram de CBM Nutrition"
